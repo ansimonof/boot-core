@@ -1,6 +1,5 @@
 package org.myorg.module.core.database.converter;
 
-
 import org.myorg.module.core.access.privilege.AccessOp;
 import org.myorg.module.core.access.privilege.AccessOpCollection;
 

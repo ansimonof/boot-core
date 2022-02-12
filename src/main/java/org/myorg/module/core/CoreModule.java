@@ -15,6 +15,7 @@ import org.myorg.modules.modules.BootModule;
 import org.myorg.modules.modules.Module;
 import org.myorg.modules.modules.exception.ModuleException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -23,6 +24,9 @@ import java.util.HashSet;
 @BootModule(
         uuid = CoreModuleConsts.UUID,
         dependencies = { AuthModule.class }
+)
+@PropertySource(
+        value = "boot-properties/core.application.properties"
 )
 public class CoreModule extends Module {
 

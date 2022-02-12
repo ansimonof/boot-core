@@ -3,6 +3,7 @@ package org.myorg.module.core.access.context.source;
 import org.myorg.module.core.access.privilege.AccessOpCollection;
 import org.myorg.module.core.access.privilege.PrivilegePair;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,6 +22,6 @@ public abstract class PrivilegeAuthorizing {
     }
 
     public Map<String, AccessOpCollection> getPrivileges() {
-        return privileges;
+        return Collections.unmodifiableMap(privileges);
     }
 }
