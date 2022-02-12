@@ -1,0 +1,48 @@
+plugins {
+    id 'org.springframework.boot' version '2.2.0.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group = 'org.myorg.module'
+version = '1.0.0'
+sourceCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main {
+        java.srcDir 'src/main/java'
+        resources.srcDir "src/main/resources"
+        compileClasspath += configurations.provided
+    }
+    test {
+        java.srcDir 'src/test/java'
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
+    manual {
+        java.srcDir 'src/manual/java'
+        resources.srcDir 'src/manual/resources'
+        compileClasspath += configurations.provided + main.output
+        runtimeClasspath += configurations.provided + main.output
+    }
+}
+
+
+dependencies {
+    
+    provided project(':boot-modules')
+    provided project(':boot-auth')
+
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    
+}
