@@ -105,7 +105,7 @@ public class UserController {
         return ResponseEntity.ok(userService.findById(id, context));
     }
 
-    @DeleteMapping
+    @PatchMapping
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -131,7 +131,7 @@ public class UserController {
         return ResponseEntity.ok(userService.findAllAccessRoles(id, context));
     }
 
-    @PutMapping("/add_access_role")
+    @PatchMapping("/add_access_role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -146,7 +146,7 @@ public class UserController {
         return ResponseEntity.ok(true);
     }
 
-    @PutMapping("/remove_access_role")
+    @PatchMapping("/remove_access_role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,

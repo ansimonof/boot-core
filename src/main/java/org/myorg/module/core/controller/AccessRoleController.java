@@ -159,7 +159,7 @@ public class AccessRoleController {
         return ResponseEntity.ok(privilegeDto);
     }
 
-    @PutMapping("/set_privileges")
+    @PatchMapping("/set_privileges")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = AccessRoleManagementPrivilege.class,

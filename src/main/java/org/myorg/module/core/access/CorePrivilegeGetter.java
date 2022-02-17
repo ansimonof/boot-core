@@ -3,6 +3,7 @@ package org.myorg.module.core.access;
 import org.myorg.module.core.access.privilege.AbstractPrivilege;
 import org.myorg.module.core.access.privilege.getter.ModulePrivilegeGetter;
 import org.myorg.module.core.privilege.AccessRoleManagementPrivilege;
+import org.myorg.module.core.privilege.ApiKeyRoleManagementPrivilege;
 import org.myorg.module.core.privilege.UserManagementPrivilege;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ public class CorePrivilegeGetter extends ModulePrivilegeGetter {
         return new ArrayList<AbstractPrivilege>() {{
             add(UserManagementPrivilege.INSTANCE);
             add(AccessRoleManagementPrivilege.INSTANCE);
+            add(ApiKeyRoleManagementPrivilege.INSTANCE);
         }};
     }
 }
