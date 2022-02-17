@@ -105,6 +105,20 @@ public class UserController {
         return ResponseEntity.ok(userService.findById(id, context));
     }
 
+    @DeleteMapping
+    @AccessPermission(
+            context = AuthenticatedContext.class,
+            privilege = UserManagementPrivilege.class,
+            ops = { AccessOp.DELETE }
+    )
+    public ResponseEntity<Long> remove(
+            final Context<?> context,
+            @RequestParam final Long id
+    ) throws ModuleException {
+        userService.remove(id, context);
+        return ResponseEntity.ok(id);
+    }
+
     @PatchMapping
     @AccessPermission(
             context = AuthenticatedContext.class,
