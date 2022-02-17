@@ -17,8 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -110,6 +113,14 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserDto findByUsername(String username, Context<?> context) throws ModuleException {
         return UserDto.from(userDAO.findByUsername(username));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<UserDto> findAdmins(Context<?> context) throws ModuleException {
+        return userDAO.execNamedQuery(DbUser.QUERY_FIND_ADMINS, Collections.emptyMap())
+                .map(UserDto::from)
+                .collect(Collectors.toSet());
     }
 
     @Override

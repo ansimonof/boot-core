@@ -26,6 +26,10 @@ import java.util.Set;
                 @NamedQuery(
                         name = DbUser.QUERY_FIND_BY_USERNAME,
                         query = "select u from DbUser u where u.username = :" + DbUser.FIELD_USERNAME
+                ),
+                @NamedQuery(
+                        name = DbUser.QUERY_FIND_ADMINS,
+                        query = "select u from DbUser u where u.isAdmin = true"
                 )
         }
 )
@@ -43,6 +47,7 @@ public class DbUser extends DomainObject {
 
     public static final String QUERY_FIND_ALL = "DbUser.findAll";
     public static final String QUERY_FIND_BY_USERNAME = "DbUser.findByUsername";
+    public static final String QUERY_FIND_ADMINS = "DbUser.findAdmins";
 
     @Column(name = FIELD_USERNAME, nullable = false, updatable = false)
     private String username;
@@ -55,13 +60,6 @@ public class DbUser extends DomainObject {
 
     @Column(name = FIELD_IS_ADMIN, nullable = false)
     private boolean isAdmin;
-
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(
-//            name = "fk_access_role",
-//            referencedColumnName = "id"
-//    )
-//    private DbAccessRole accessRole;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

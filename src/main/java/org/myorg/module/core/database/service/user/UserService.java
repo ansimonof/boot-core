@@ -11,6 +11,8 @@ public interface UserService extends DomainObjectService<UserBuilder, UserDto> {
 
     UserDto findByUsername(String username, Context<?> context) throws ModuleException;
 
+    Set<UserDto> findAdmins(Context<?> context) throws ModuleException;
+
     UserDto banUser(long userId, Context<?> context) throws ModuleException;
 
     Set<AccessRoleDto> findAllAccessRoles(long userId, Context<?> context) throws ModuleException;

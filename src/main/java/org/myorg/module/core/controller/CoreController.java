@@ -38,7 +38,7 @@ public class CoreController {
             final Context<?> context,
             @RequestBody final InitForm initForm
     ) throws ModuleException {
-        if (userService.findAll(context).size() > 0) {
+        if (userService.findAdmins(context).size() > 0) {
             throw ModuleExceptionBuilder.buildInternalServerErrorException("Server is already initialized");
         }
 
