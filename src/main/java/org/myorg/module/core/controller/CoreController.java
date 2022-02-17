@@ -9,7 +9,9 @@ import org.myorg.module.core.access.AccessPermission;
 import org.myorg.module.core.database.service.user.UserBuilder;
 import org.myorg.module.core.database.service.user.UserDto;
 import org.myorg.module.core.database.service.user.UserService;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.exception.ModuleException;
+import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,14 +35,20 @@ public class CoreController {
             context = UnauthenticatedContext.class
     )
     public ResponseEntity<UserDto> init(
+            final Context<?> context,
             @RequestBody final InitForm initForm
     ) throws ModuleException {
+        if (userService.findAll(context).size() > 0) {
+            throw ModuleExceptionBuilder.buildInternalServerErrorException("Server is already initialized");
+        }
+
         UserDto user = userService.create(
                 UserBuilder.builder()
                 .username(initForm.username)
                 .passwordHash(initForm.passwordHash)
                 .isEnabled(true)
-                .isAdmin(true)
+                .isAdmin(true),
+                context
         );
         return ResponseEntity.ok(user);
     }

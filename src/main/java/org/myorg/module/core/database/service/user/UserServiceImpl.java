@@ -1,6 +1,11 @@
 package org.myorg.module.core.database.service.user;
 
 import org.apache.commons.lang3.StringUtils;
+import org.myorg.module.auth.access.context.AuthenticatedContext;
+import org.myorg.module.core.exception.CoreExceptionBuilder;
+import org.myorg.modules.access.context.Context;
+import org.myorg.module.auth.exception.AuthExceptionBuilder;
+import org.myorg.module.core.access.context.source.CoreUserSource;
 import org.myorg.module.core.database.dao.AccessRoleDAO;
 import org.myorg.module.core.database.dao.UserDAO;
 import org.myorg.module.core.database.domainobject.DbAccessRole;
@@ -29,13 +34,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserDto findById(long id) throws ModuleException {
+    public UserDto findById(long id, Context<?> context) throws ModuleException {
         return UserDto.from(userDAO.findById(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Set<UserDto> findAll() throws ModuleException {
+    public Set<UserDto> findAll(Context<?> context) throws ModuleException {
         return userDAO.findAll().stream()
                 .map(UserDto::from)
                 .collect(Collectors.toSet());
@@ -43,7 +48,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto create(UserBuilder builder) throws ModuleException {
+    public UserDto create(UserBuilder builder, Context<?> context) throws ModuleException {
         if (!builder.isContainUsername() || StringUtils.isEmpty(builder.getUsername())) {
             throw ModuleExceptionBuilder.buildEmptyValueException(DbUser.class, DbUser.FIELD_USERNAME);
         }
@@ -68,7 +73,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto update(long id, UserBuilder builder) throws ModuleException {
+    public UserDto update(long id, UserBuilder builder, Context<?> context) throws ModuleException {
         DbUser dbUser = userDAO.checkExistenceAndReturn(id);
 
         if (builder.isContainUsername() && StringUtils.isEmpty(builder.getUsername())) {
@@ -94,7 +99,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void remove(long id) throws ModuleException {
+    public void remove(long id, Context<?> context) throws ModuleException {
         DbUser dbUser = userDAO.findById(id);
         if (dbUser != null) {
             userDAO.makeTransient(dbUser);
@@ -103,13 +108,34 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserDto findByUsername(String username) throws ModuleException {
+    public UserDto findByUsername(String username, Context<?> context) throws ModuleException {
         return UserDto.from(userDAO.findByUsername(username));
     }
 
     @Override
+    @Transactional
+    public UserDto banUser(long userId, Context<?> context) throws ModuleException {
+        if (!(context instanceof AuthenticatedContext)) {
+            throw AuthExceptionBuilder.buildInvalidAuthenticationContextException(context.getClass(), AuthenticatedContext.class);
+        }
+
+        if (!(context.getSource() instanceof CoreUserSource)) {
+            throw AuthExceptionBuilder.buildInvalidRequestSourceException(context.getSource().getClass(), CoreUserSource.class);
+        }
+
+        CoreUserSource userSource = (CoreUserSource) context.getSource();
+        DbUser dbUser = userDAO.findById(userSource.getId());
+        DbUser userForBan = userDAO.findById(userId);
+        if (!dbUser.isAdmin() && userForBan.isAdmin()) {
+            throw CoreExceptionBuilder.buildAdminCannotBeBannedException();
+        }
+
+        return update(userId, UserBuilder.builder().isEnabled(false), context);
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public Set<AccessRoleDto> findAllAccessRoles(long userId) throws ModuleException {
+    public Set<AccessRoleDto> findAllAccessRoles(long userId, Context<?> context) throws ModuleException {
         DbUser dbUser = userDAO.checkExistenceAndReturn(userId);
         return dbUser.getAccessRoles().stream()
                 .map(AccessRoleDto::from)
@@ -118,7 +144,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto addAccessRole(long userId, long accessRoleId) throws ModuleException {
+    public UserDto addAccessRole(long userId, long accessRoleId, Context<?> context) throws ModuleException {
         DbUser dbUser = userDAO.checkExistenceAndReturn(userId);
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(accessRoleId);
         dbUser.addAccessRole(dbAccessRole);
@@ -128,7 +154,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto removeAccessRole(long userId, long accessRoleId) throws ModuleException {
+    public UserDto removeAccessRole(long userId, long accessRoleId, Context<?> context) throws ModuleException {
         DbUser dbUser = userDAO.checkExistenceAndReturn(userId);
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(accessRoleId);
         dbUser.getAccessRoles().remove(dbAccessRole);
@@ -156,12 +182,6 @@ public class UserServiceImpl implements UserService {
 
         if (builder.isContainAdmin()) {
             dbUser.setAdmin(builder.getIsAdmin());
-        }
-
-        if (builder.isContainAdmin() || builder.isContainEnabled()) {
-            if (builder.getIsAdmin() && !builder.getIsAdmin()) {
-                throw ModuleExceptionBuilder.buildAdminCannotBeDisabledException();
-            }
         }
 
     }

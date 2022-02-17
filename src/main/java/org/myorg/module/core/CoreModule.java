@@ -11,9 +11,11 @@ import org.myorg.module.core.database.service.apikey.ApiKeyDto;
 import org.myorg.module.core.database.service.apikey.ApiKeyService;
 import org.myorg.module.core.privilege.AccessRoleManagementPrivilege;
 import org.myorg.module.core.privilege.UserManagementPrivilege;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.BootModule;
 import org.myorg.modules.modules.Module;
 import org.myorg.modules.modules.exception.ModuleException;
+import org.myorg.modules.utils.ContextUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -41,7 +43,6 @@ public class CoreModule extends Module {
 
     @Override
     public void init() throws ModuleException {
-
         PrivilegeBuilder privilege1 = PrivilegeBuilder.builder()
                 .key(UserManagementPrivilege.INSTANCE.getKey())
                 .ops(AccessOp.READ, AccessOp.DELETE);
@@ -50,14 +51,17 @@ public class CoreModule extends Module {
                 .key(AccessRoleManagementPrivilege.INSTANCE.getKey())
                 .ops(AccessOp.READ, AccessOp.WRITE, AccessOp.DELETE);
 
-        AccessRoleDto accessRoleDto = accessRoleService.create(AccessRoleBuilder.builder().name("ar"));
+
+        Context<?> context = ContextUtils.createSystemContext();
+
+        AccessRoleDto accessRoleDto = accessRoleService.create(AccessRoleBuilder.builder().name("ar"), context);
         accessRoleDto = accessRoleService.addPrivileges(accessRoleDto.getId(), new HashSet<PrivilegeBuilder>() {{
             add(privilege1);
             add(privilege2);
-        }});
+        }}, context);
 
-        ApiKeyDto apiKeyDto = apiKeyService.create(ApiKeyBuilder.builder().name("APIQWE").value("123"));
-        apiKeyService.addAccessRole(apiKeyDto.getId(), accessRoleDto.getId());
+        ApiKeyDto apiKeyDto = apiKeyService.create(ApiKeyBuilder.builder().name("APIQWE").value("123"), context);
+        apiKeyService.addAccessRole(apiKeyDto.getId(), accessRoleDto.getId(), context);
 
     }
 

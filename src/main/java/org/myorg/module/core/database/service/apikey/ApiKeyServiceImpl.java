@@ -6,6 +6,7 @@ import org.myorg.module.core.database.dao.ApiKeyDAO;
 import org.myorg.module.core.database.domainobject.DbAccessRole;
 import org.myorg.module.core.database.domainobject.DbApiKey;
 import org.myorg.module.core.database.service.accessrole.AccessRoleDto;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.crypto.CryptoService;
 import org.myorg.modules.modules.exception.ModuleException;
 import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
@@ -33,7 +34,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiKeyDto findById(long id) throws ModuleException {
+    public ApiKeyDto findById(long id, Context<?> context) throws ModuleException {
         DbApiKey dbApiKey = apiKeyDAO.findById(id);
         if (dbApiKey == null) {
             return null;
@@ -44,7 +45,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional(readOnly = true)
-    public Set<ApiKeyDto> findAll() throws ModuleException {
+    public Set<ApiKeyDto> findAll(Context<?> context) throws ModuleException {
         return apiKeyDAO.findAll().stream()
                 .map(this::createDto)
                 .collect(Collectors.toSet());
@@ -53,7 +54,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional
-    public ApiKeyDto create(ApiKeyBuilder builder) throws ModuleException {
+    public ApiKeyDto create(ApiKeyBuilder builder, Context<?> context) throws ModuleException {
         if (!builder.isContainName() || StringUtils.isEmpty(builder.getName())) {
             throw ModuleExceptionBuilder.buildEmptyValueException(DbApiKey.class, DbApiKey.FIELD_NAME);
         }
@@ -71,7 +72,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional
-    public ApiKeyDto update(long id, ApiKeyBuilder builder) throws ModuleException {
+    public ApiKeyDto update(long id, ApiKeyBuilder builder, Context<?> context) throws ModuleException {
         DbApiKey dbApiKey = apiKeyDAO.checkExistenceAndReturn(id);
 
         if (builder.isContainName() && StringUtils.isEmpty(builder.getName())) {
@@ -90,7 +91,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional
-    public void remove(long id) throws ModuleException {
+    public void remove(long id, Context<?> context) throws ModuleException {
         DbApiKey dbApiKey = apiKeyDAO.findById(id);
         if (dbApiKey != null) {
             apiKeyDAO.makeTransient(dbApiKey);
@@ -99,7 +100,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional(readOnly = true)
-    public Set<AccessRoleDto> findAllAccessRoles(long apiKeyId) throws ModuleException {
+    public Set<AccessRoleDto> findAllAccessRoles(long apiKeyId, Context<?> context) throws ModuleException {
         DbApiKey dbApiKey = apiKeyDAO.checkExistenceAndReturn(apiKeyId);
         return dbApiKey.getAccessRoles().stream()
                 .map(AccessRoleDto::from)
@@ -108,7 +109,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional
-    public ApiKeyDto addAccessRole(long apiKeyId, long accessRoleId) throws ModuleException {
+    public ApiKeyDto addAccessRole(long apiKeyId, long accessRoleId, Context<?> context) throws ModuleException {
         DbApiKey dbApiKey = apiKeyDAO.checkExistenceAndReturn(apiKeyId);
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(accessRoleId);
 
@@ -119,7 +120,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional
-    public ApiKeyDto removeAccessRole(long apiKeyId, long accessRoleId) throws ModuleException {
+    public ApiKeyDto removeAccessRole(long apiKeyId, long accessRoleId, Context<?> context) throws ModuleException {
         DbApiKey dbApiKey = apiKeyDAO.checkExistenceAndReturn(apiKeyId);
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(accessRoleId);
 
@@ -130,8 +131,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiKeyDto findByValue(String value) throws ModuleException {
-        for (ApiKeyDto apiKeyDto : findAll()) {
+    public ApiKeyDto findByValue(String value, Context<?> context) throws ModuleException {
+        for (ApiKeyDto apiKeyDto : findAll(context)) {
             if (Objects.equals(apiKeyDto.getValue(), value)) {
                 return apiKeyDto;
             }

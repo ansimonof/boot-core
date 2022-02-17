@@ -12,6 +12,7 @@ import org.myorg.module.core.access.privilege.getter.PrivilegeGetter;
 import org.myorg.module.core.database.domainobject.DbAccessRole;
 import org.myorg.module.core.database.service.accessrole.*;
 import org.myorg.module.core.privilege.AccessRoleManagementPrivilege;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.exception.ModuleException;
 import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +45,10 @@ public class AccessRoleController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<AccessRoleDto> findById(
-            @RequestParam Long id
+            final Context<?> context,
+            @RequestParam final Long id
     ) throws ModuleException {
-        AccessRoleDto accessRoleDto = accessRoleService.findById(id);
+        AccessRoleDto accessRoleDto = accessRoleService.findById(id, context);
         if (accessRoleDto == null) {
             throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbAccessRole.class, id);
         }
@@ -60,8 +62,10 @@ public class AccessRoleController {
             privilege = AccessRoleManagementPrivilege.class,
             ops = { AccessOp.READ }
     )
-    public ResponseEntity<Set<AccessRoleDto>> list() throws ModuleException {
-        return ResponseEntity.ok(accessRoleService.findAll());
+    public ResponseEntity<Set<AccessRoleDto>> list(
+            final Context<?> context
+    ) throws ModuleException {
+        return ResponseEntity.ok(accessRoleService.findAll(context));
     }
 
     @PostMapping("/create")
@@ -71,27 +75,30 @@ public class AccessRoleController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<AccessRoleDto> create(
+            final Context<?> context,
             @RequestParam final String name
     ) throws ModuleException {
         AccessRoleDto accessRoleDto = accessRoleService.create(
                 AccessRoleBuilder.builder()
-                        .name(name)
+                        .name(name),
+                context
         );
 
         return ResponseEntity.ok(accessRoleDto);
     }
 
-    @PutMapping("/update")
+    @PatchMapping("/update")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = AccessRoleManagementPrivilege.class,
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<AccessRoleDto> update(
+            final Context<?> context,
             @RequestParam final Long id,
             @RequestParam(required = false) final String name
     ) throws ModuleException {
-        return ResponseEntity.ok(accessRoleService.update(id, AccessRoleBuilder.builder().name(name)));
+        return ResponseEntity.ok(accessRoleService.update(id, AccessRoleBuilder.builder().name(name), context));
     }
 
     @DeleteMapping("/remove")
@@ -101,9 +108,10 @@ public class AccessRoleController {
             ops = { AccessOp.DELETE }
     )
     public ResponseEntity<Long> remove(
+            final Context<?> context,
             @RequestParam final Long id
     ) throws ModuleException {
-        accessRoleService.remove(id);
+        accessRoleService.remove(id, context);
         return ResponseEntity.ok(id);
     }
 
@@ -158,6 +166,7 @@ public class AccessRoleController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<AccessRoleDto> setPrivileges(
+            final Context<?> context,
             @RequestParam(name = "access_role_id") final Long accessRoleId,
             @RequestBody final PrivilegeSet newPrivileges
     ) throws ModuleException {
@@ -168,7 +177,8 @@ public class AccessRoleController {
                                 .key(p.getKey())
                                 .ops(p.getOps())
                         )
-                        .collect(Collectors.toSet())
+                        .collect(Collectors.toSet()),
+                context
         ) ;
 
         return ResponseEntity.ok(accessRoleDto);

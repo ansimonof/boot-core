@@ -4,20 +4,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.myorg.module.auth.access.context.AuthenticatedContext;
+import org.myorg.modules.access.context.Context;
 import org.myorg.module.auth.access.context.UnauthenticatedContext;
+import org.myorg.module.auth.access.context.UserSessionAuthenticatedContext;
+import org.myorg.module.auth.service.session.SessionRegistryService;
+import org.myorg.module.auth.service.session.SessionUser;
 import org.myorg.module.core.CoreModuleConsts;
 import org.myorg.module.core.access.AccessPermission;
 import org.myorg.module.core.access.privilege.AccessOp;
+import org.myorg.module.core.database.domainobject.DbUser;
 import org.myorg.module.core.database.service.accessrole.AccessRoleDto;
 import org.myorg.module.core.database.service.user.UserBuilder;
 import org.myorg.module.core.database.service.user.UserDto;
 import org.myorg.module.core.database.service.user.UserService;
 import org.myorg.module.core.privilege.UserManagementPrivilege;
 import org.myorg.modules.modules.exception.ModuleException;
+import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
 import java.util.Set;
 
 @RestController
@@ -25,10 +32,12 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
+    private final SessionRegistryService sessionRegistryService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, SessionRegistryService sessionRegistryService) {
         this.userService = userService;
+        this.sessionRegistryService = sessionRegistryService;
     }
 
     @PostMapping("/registration")
@@ -36,6 +45,7 @@ public class UserController {
             context = UnauthenticatedContext.class
     )
     public ResponseEntity<UserDto> registration(
+            final Context<?> context,
             @RequestBody final RegistrationForm registrationForm
     ) throws ModuleException {
         UserDto user = userService.create(
@@ -43,9 +53,43 @@ public class UserController {
                         .username(registrationForm.username)
                         .passwordHash(registrationForm.passwordHash)
                         .isEnabled(true)
-                        .isAdmin(false)
+                        .isAdmin(false),
+                context
         );
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/logon")
+    @AccessPermission(
+            context = UnauthenticatedContext.class
+    )
+    public ResponseEntity<SessionUser> logon(
+            final Context<?> context,
+            @RequestBody final LogonForm logonForm
+    ) throws ModuleException {
+        UserDto user = userService.findByUsername(logonForm.username, context);
+        if (user == null) {
+            throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, DbUser.FIELD_USERNAME, logonForm.username);
+        }
+
+        if (!Objects.equals(user.getPasswordHash(), logonForm.passwordHash)) {
+            throw ModuleExceptionBuilder.buildInvalidValueException(logonForm.passwordHash);
+        }
+
+        SessionUser sessionUser = sessionRegistryService.auth(logonForm.username, user.getId());
+        return ResponseEntity.ok(sessionUser);
+    }
+
+    @PostMapping("/logout")
+    @AccessPermission(
+            context = UserSessionAuthenticatedContext.class
+    )
+    public ResponseEntity<Boolean> logon(
+            final Context<?> context
+    ) {
+        UserSessionAuthenticatedContext sessionAuthenticatedContext = (UserSessionAuthenticatedContext) context;
+        sessionRegistryService.logout(sessionAuthenticatedContext.getSession());
+        return ResponseEntity.ok(true);
     }
 
     @GetMapping
@@ -55,9 +99,23 @@ public class UserController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<UserDto> findById(
+            final Context<?> context,
             @RequestParam final Long id
     ) throws ModuleException {
-        return ResponseEntity.ok(userService.findById(id));
+        return ResponseEntity.ok(userService.findById(id, context));
+    }
+
+    @DeleteMapping
+    @AccessPermission(
+            context = AuthenticatedContext.class,
+            privilege = UserManagementPrivilege.class,
+            ops = { AccessOp.WRITE }
+    )
+    public ResponseEntity<UserDto> banUser(
+            final Context<?> context,
+            @RequestParam final Long id
+    ) throws ModuleException {
+        return ResponseEntity.ok(userService.banUser(id, context));
     }
 
     @GetMapping("/list_access_role")
@@ -67,9 +125,10 @@ public class UserController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<Set<AccessRoleDto>> listAccessRoles(
+            final Context<?> context,
             @RequestParam final Long id
     ) throws ModuleException {
-        return ResponseEntity.ok(userService.findAllAccessRoles(id));
+        return ResponseEntity.ok(userService.findAllAccessRoles(id, context));
     }
 
     @PutMapping("/add_access_role")
@@ -79,10 +138,11 @@ public class UserController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<Boolean> addAccessRole(
-            @RequestParam final Long userId,
-            @RequestParam final Long accessRoleId
+            final Context<?> context,
+            @RequestParam("user_id") final Long userId,
+            @RequestParam("access_role_id") final Long accessRoleId
     ) throws ModuleException {
-        userService.addAccessRole(userId, accessRoleId);
+        userService.addAccessRole(userId, accessRoleId, context);
         return ResponseEntity.ok(true);
     }
 
@@ -93,10 +153,11 @@ public class UserController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<Boolean> removeAccessRole(
-            @RequestParam final Long userId,
-            @RequestParam final Long accessRoleId
+            final Context<?> context,
+            @RequestParam("user_id") final Long userId,
+            @RequestParam("access_role_id") final Long accessRoleId
     ) throws ModuleException {
-        userService.removeAccessRole(userId, accessRoleId);
+        userService.removeAccessRole(userId, accessRoleId, context);
         return ResponseEntity.ok(true);
     }
 
@@ -105,9 +166,19 @@ public class UserController {
     private static class RegistrationForm {
 
         @JsonProperty("username")
-        private String username;
+        public String username;
         @JsonProperty("password_hash")
-        private String passwordHash;
+        public String passwordHash;
+    }
+
+    @Data
+    @NoArgsConstructor
+    private static class LogonForm {
+
+        @JsonProperty("username")
+        public String username;
+        @JsonProperty("password_hash")
+        public String passwordHash;
     }
 
 }

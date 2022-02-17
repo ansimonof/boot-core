@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.myorg.module.core.database.dao.AccessRoleDAO;
 import org.myorg.module.core.database.domainobject.DbAccessRole;
 import org.myorg.module.core.database.domainobject.PrivilegeEmbeddable;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.exception.ModuleException;
 import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,13 +27,13 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public AccessRoleDto findById(long id) throws ModuleException {
+    public AccessRoleDto findById(long id, Context<?> context) throws ModuleException {
         return AccessRoleDto.from(accessRoleDAO.findById(id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Set<AccessRoleDto> findAll() throws ModuleException {
+    public Set<AccessRoleDto> findAll(Context<?> context) throws ModuleException {
         return accessRoleDAO.findAll().stream()
                 .map(AccessRoleDto::from)
                 .collect(Collectors.toSet());
@@ -40,7 +41,7 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
     @Override
     @Transactional
-    public AccessRoleDto create(AccessRoleBuilder builder) throws ModuleException {
+    public AccessRoleDto create(AccessRoleBuilder builder, Context<?> context) throws ModuleException {
         if (!builder.isContainName() || StringUtils.isEmpty(builder.getName())) {
             throw ModuleExceptionBuilder.buildEmptyValueException(DbAccessRole.class, DbAccessRole.FIELD_NAME);
         }
@@ -53,7 +54,7 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
     @Override
     @Transactional
-    public AccessRoleDto update(long id, AccessRoleBuilder builder) throws ModuleException {
+    public AccessRoleDto update(long id, AccessRoleBuilder builder, Context<?> context) throws ModuleException {
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(id);
 
         if (builder.isContainName() && StringUtils.isEmpty(builder.getName())) {
@@ -67,7 +68,7 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
     @Override
     @Transactional
-    public void remove(long id) throws ModuleException {
+    public void remove(long id, Context<?> context) throws ModuleException {
         DbAccessRole dbAccessRole = accessRoleDAO.findById(id);
         if (dbAccessRole != null) {
             accessRoleDAO.makeTransient(dbAccessRole);
@@ -76,7 +77,7 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Set<PrivilegeDto> findAllPrivileges(long accessId) throws ModuleException {
+    public Set<PrivilegeDto> findAllPrivileges(long accessId, Context<?> context) throws ModuleException {
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(accessId);
         AccessRoleDto accessRoleDto = AccessRoleDto.from(dbAccessRole);
         return accessRoleDto.getPrivileges();
@@ -84,7 +85,7 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
     @Override
     @Transactional
-    public AccessRoleDto addPrivileges(long accessRoleId, Set<PrivilegeBuilder> builders) throws ModuleException {
+    public AccessRoleDto addPrivileges(long accessRoleId, Set<PrivilegeBuilder> builders, Context<?> context) throws ModuleException {
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndReturn(accessRoleId);
 
         Set<PrivilegeEmbeddable> privileges = new HashSet<>();

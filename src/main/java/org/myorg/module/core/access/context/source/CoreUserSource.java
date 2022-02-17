@@ -22,4 +22,8 @@ public class CoreUserSource extends PrivilegeAuthorizing implements UserSource {
         super(privileges);
         this.id = id;
     }
+
+    public long getId() {
+        return id;
+    }
 }

@@ -1,6 +1,6 @@
 package org.myorg.module.core.web.security.authorization;
 
-import org.myorg.module.auth.access.context.Context;
+import org.myorg.modules.access.context.Context;
 import org.myorg.module.auth.access.context.UserAuthenticatedContext;
 import org.myorg.module.auth.authentication.token.CustomAbstractAuthenticationToken;
 import org.myorg.module.auth.authorization.CustomAccessDecisionVoter;
@@ -55,7 +55,7 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
     }
 
     private int authorize(Authentication authentication, Object object, Collection collection) throws ModuleException {
-        // Запрещаем выполнять запрос для других Authentication
+        // Forbidding execute query for unknown tokens
         if (!(authentication instanceof CustomAbstractAuthenticationToken)) {
             return ACCESS_DENIED;
         }
@@ -67,7 +67,7 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
         Method method = (Method) authentication.getDetails();
         ControllerInfo controllerInfo = controllerMappingInfoInitializer.getControllersInfo().get(method);
 
-        // Чекаем контекст
+        // Checking auth context
         Context<?> context = (Context<?>) authentication.getPrincipal();
         Class<? extends Context> requestContextClazz = context.getClass();
         Class<? extends Context> controllerContextClazz = controllerInfo.getContext();
@@ -79,11 +79,11 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
             return ACCESS_GRANTED;
         }
 
-        // Чекаем привилегии
+        // Checking privileges
         if (context instanceof UserAuthenticatedContext) {
             try {
                 CoreUserSource source = (CoreUserSource) context.getSource();
-                UserDto user = userService.findById(source.getId());
+                UserDto user = userService.findById(source.getId(), context);
                 if (user != null && user.isAdmin()) {
                     return ACCESS_GRANTED;
                 }

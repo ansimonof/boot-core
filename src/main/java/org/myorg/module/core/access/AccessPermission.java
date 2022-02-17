@@ -1,6 +1,6 @@
 package org.myorg.module.core.access;
 
-import org.myorg.module.auth.access.context.Context;
+import org.myorg.modules.access.context.Context;
 import org.myorg.module.core.access.privilege.AbstractPrivilege;
 import org.myorg.module.core.access.privilege.AccessOp;
 
