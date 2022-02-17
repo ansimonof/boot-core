@@ -55,7 +55,7 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
     }
 
     private int authorize(Authentication authentication, Object object, Collection collection) throws ModuleException {
-        // Forbidding execute query for unknown tokens
+        // Forbidding to execute query for unknown tokens
         if (!(authentication instanceof CustomAbstractAuthenticationToken)) {
             return ACCESS_DENIED;
         }

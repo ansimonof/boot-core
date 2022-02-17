@@ -32,17 +32,19 @@ public class ControllerMappingInfoInitializer {
         this.controllersInfo = new HashMap<>();
     }
 
-    private ControllerInfo validateParamsAndGetInfo(Class<? extends Context> context,
-                                          Class<? extends AbstractPrivilege> privilegeClazz,
-                                          AccessOp[] ops) {
+    private ControllerInfo validateParamsAndGetInfo(
+            Method method,
+            Class<? extends Context> context,
+            Class<? extends AbstractPrivilege> privilegeClazz,
+            AccessOp[] ops) {
         if (context == UnauthenticatedContext.class && privilegeClazz != AbstractPrivilege.class) {
-            throw new RuntimeException("Context is unauthorized, but there is privilege");
+            throw new RuntimeException("Context is unauthorized, but there is privilege (method = " + method.getName() + ")");
         }
 
         if (privilegeClazz != AbstractPrivilege.class) {
             int modifiers = privilegeClazz.getModifiers();
             if (Modifier.isAbstract(modifiers)) {
-                throw new RuntimeException("Cannot instationate privilege");
+                throw new RuntimeException("Cannot instantiate privilege: " + privilegeClazz.getSimpleName());
             }
 
             AbstractPrivilege privilege;
@@ -61,7 +63,7 @@ public class ControllerMappingInfoInitializer {
 
             return new ControllerInfo(privilege, ops, context);
         } else if (ops != null && ops.length != 0) {
-            throw new RuntimeException("No privilege, but there are access operations");
+            throw new RuntimeException("No privilege, but there are access operations (method = " + method.getName() + ")");
         } else {
             return new ControllerInfo(null, null, context);
         }
@@ -81,7 +83,7 @@ public class ControllerMappingInfoInitializer {
                 Class<? extends AbstractPrivilege> privilegeClazz = accessPermissionAnn.privilege();
                 AccessOp[] ops = accessPermissionAnn.ops();
 
-                controllerInfo = validateParamsAndGetInfo(context, privilegeClazz, ops);
+                controllerInfo = validateParamsAndGetInfo(method, context, privilegeClazz, ops);
             } else {
                 controllerInfo = new ControllerInfo(null, null, UnauthenticatedContext.class);
             }
