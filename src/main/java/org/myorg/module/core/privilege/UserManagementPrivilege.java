@@ -14,8 +14,4 @@ public class UserManagementPrivilege extends AbstractPrivilege {
         );
     }
 
-    @Override
-    public AbstractPrivilege getInstance() {
-        return INSTANCE;
-    }
 }

@@ -1,6 +1,5 @@
 package org.myorg.module.core.web.security.authorization;
 
-import org.myorg.modules.access.context.Context;
 import org.myorg.module.auth.access.context.UserAuthenticatedContext;
 import org.myorg.module.auth.authentication.token.CustomAbstractAuthenticationToken;
 import org.myorg.module.auth.authorization.CustomAccessDecisionVoter;
@@ -8,11 +7,14 @@ import org.myorg.module.core.access.context.source.CoreUserSource;
 import org.myorg.module.core.access.context.source.PrivilegeAuthorizing;
 import org.myorg.module.core.access.privilege.AccessOpCollection;
 import org.myorg.module.core.access.privilege.PrivilegePair;
+import org.myorg.module.core.database.domainobject.DbUser;
 import org.myorg.module.core.database.service.user.UserDto;
 import org.myorg.module.core.database.service.user.UserService;
 import org.myorg.module.core.web.ControllerInfo;
 import org.myorg.module.core.web.ControllerMappingInfoInitializer;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.exception.ModuleException;
+import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.core.Authentication;
@@ -81,13 +83,16 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
 
         // Checking privileges
         if (context instanceof UserAuthenticatedContext) {
-            try {
-                CoreUserSource source = (CoreUserSource) context.getSource();
-                UserDto user = userService.findById(source.getId(), context);
-                if (user != null && user.isAdmin()) {
-                    return ACCESS_GRANTED;
-                }
-            } catch (ModuleException ignore) { }
+            CoreUserSource source = (CoreUserSource) context.getSource();
+            UserDto user = userService.findById(source.getId(), context);
+            if (user == null) {
+                throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, source.getId());
+            }
+            if (user.isAdmin()) {
+                return ACCESS_GRANTED;
+            } else if (!user.isEnabled()) {
+                return ACCESS_DENIED;
+            }
         }
 
         PrivilegePair controllerPrivilege = new PrivilegePair(

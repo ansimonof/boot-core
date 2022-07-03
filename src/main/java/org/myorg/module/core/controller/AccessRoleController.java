@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping(CoreModuleConsts.REST_CONTROLLER_PREFIX + "/access_role")
+@RequestMapping(CoreModuleConsts.REST_CONTROLLER_PREFIX + "/access-role")
 public class AccessRoleController {
 
     private final PrivilegeGetter privilegeGetter;
@@ -38,7 +38,7 @@ public class AccessRoleController {
         this.accessRoleService = accessRoleService;
     }
 
-    @GetMapping
+    @GetMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = AccessRoleManagementPrivilege.class,
@@ -46,7 +46,7 @@ public class AccessRoleController {
     )
     public ResponseEntity<AccessRoleDto> findById(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final Long id
     ) throws ModuleException {
         AccessRoleDto accessRoleDto = accessRoleService.findById(id, context);
         if (accessRoleDto == null) {
@@ -78,16 +78,11 @@ public class AccessRoleController {
             final Context<?> context,
             @RequestParam final String name
     ) throws ModuleException {
-        AccessRoleDto accessRoleDto = accessRoleService.create(
-                AccessRoleBuilder.builder()
-                        .name(name),
-                context
-        );
-
+        AccessRoleDto accessRoleDto = accessRoleService.create(AccessRoleBuilder.builder().name(name), context);
         return ResponseEntity.ok(accessRoleDto);
     }
 
-    @PatchMapping("/update")
+    @PatchMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = AccessRoleManagementPrivilege.class,
@@ -95,13 +90,13 @@ public class AccessRoleController {
     )
     public ResponseEntity<AccessRoleDto> update(
             final Context<?> context,
-            @RequestParam final Long id,
+            @PathVariable final Long id,
             @RequestParam(required = false) final String name
     ) throws ModuleException {
         return ResponseEntity.ok(accessRoleService.update(id, AccessRoleBuilder.builder().name(name), context));
     }
 
-    @DeleteMapping("/remove")
+    @DeleteMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = AccessRoleManagementPrivilege.class,
@@ -109,7 +104,7 @@ public class AccessRoleController {
     )
     public ResponseEntity<Long> remove(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final Long id
     ) throws ModuleException {
         accessRoleService.remove(id, context);
         return ResponseEntity.ok(id);
@@ -159,7 +154,7 @@ public class AccessRoleController {
         return ResponseEntity.ok(privilegeDto);
     }
 
-    @PatchMapping("/set_privileges")
+    @PatchMapping("/set-privileges")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = AccessRoleManagementPrivilege.class,
@@ -167,7 +162,7 @@ public class AccessRoleController {
     )
     public ResponseEntity<AccessRoleDto> setPrivileges(
             final Context<?> context,
-            @RequestParam(name = "access_role_id") final Long accessRoleId,
+            @RequestParam(name = "access-role-id") final Long accessRoleId,
             @RequestBody final PrivilegeSet newPrivileges
     ) throws ModuleException {
         AccessRoleDto accessRoleDto = accessRoleService.addPrivileges(
@@ -176,10 +171,8 @@ public class AccessRoleController {
                         .map(p -> PrivilegeBuilder.builder()
                                 .key(p.getKey())
                                 .ops(p.getOps())
-                        )
-                        .collect(Collectors.toSet()),
-                context
-        ) ;
+                        ).collect(Collectors.toSet()),
+                context);
 
         return ResponseEntity.ok(accessRoleDto);
     }

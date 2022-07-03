@@ -14,8 +14,4 @@ public class ApiKeyRoleManagementPrivilege extends AbstractPrivilege {
         );
     }
 
-    @Override
-    public AbstractPrivilege getInstance() {
-        return INSTANCE;
-    }
 }

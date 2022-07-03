@@ -44,10 +44,10 @@ public class CoreController {
 
         UserDto user = userService.create(
                 UserBuilder.builder()
-                .username(initForm.username)
-                .passwordHash(initForm.passwordHash)
-                .isEnabled(true)
-                .isAdmin(true),
+                        .username(initForm.username)
+                        .passwordHash(initForm.passwordHash)
+                        .isEnabled(true)
+                        .isAdmin(true),
                 context
         );
         return ResponseEntity.ok(user);

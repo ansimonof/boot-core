@@ -18,6 +18,4 @@ public abstract class AbstractPrivilege {
         return accessOpCollection;
     }
 
-    public abstract AbstractPrivilege getInstance();
-
 }

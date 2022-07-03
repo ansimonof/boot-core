@@ -14,8 +14,4 @@ public class AccessRoleManagementPrivilege extends AbstractPrivilege {
         );
     }
 
-    @Override
-    public AbstractPrivilege getInstance() {
-        return INSTANCE;
-    }
 }

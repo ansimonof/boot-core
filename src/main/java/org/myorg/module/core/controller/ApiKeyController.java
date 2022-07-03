@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Set;
 
 @RestController
-@RequestMapping(CoreModuleConsts.REST_CONTROLLER_PREFIX + "/api_key")
+@RequestMapping(CoreModuleConsts.REST_CONTROLLER_PREFIX + "/api-key")
 public class ApiKeyController {
 
     private final ApiKeyService apiKeyService;
@@ -29,7 +29,7 @@ public class ApiKeyController {
         this.apiKeyService = apiKeyService;
     }
 
-    @GetMapping
+    @GetMapping("{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
@@ -37,7 +37,7 @@ public class ApiKeyController {
     )
     public ResponseEntity<ApiKeyDto> findById(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final Long id
     ) throws ModuleException {
         ApiKeyDto apiKeyDto = apiKeyService.findById(id ,context);
         return ResponseEntity.ok(apiKeyDto);
@@ -73,7 +73,7 @@ public class ApiKeyController {
         return ResponseEntity.ok(apiKeyDto);
     }
 
-    @PatchMapping("/update")
+    @PatchMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
@@ -81,7 +81,7 @@ public class ApiKeyController {
     )
     public ResponseEntity<ApiKeyDto> update(
             final Context<?> context,
-            @RequestParam final Long id,
+            @PathVariable final Long id,
             @RequestParam final ApiKeyForm apiKeyForm
     ) throws ModuleException {
         ApiKeyDto apiKeyDto = apiKeyService.update(
@@ -94,7 +94,7 @@ public class ApiKeyController {
         return ResponseEntity.ok(apiKeyDto);
     }
 
-    @DeleteMapping("/remove")
+    @DeleteMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
@@ -102,7 +102,7 @@ public class ApiKeyController {
     )
     public ResponseEntity<Long> remove(
             final Context<?> context,
-            @RequestParam final Long id,
+            @PathVariable final Long id,
             @RequestParam final ApiKeyForm apiKeyForm
     ) throws ModuleException {
         ApiKeyDto apiKeyDto = apiKeyService.update(
@@ -115,7 +115,7 @@ public class ApiKeyController {
         return ResponseEntity.ok(id);
     }
 
-    @GetMapping("/list_access_role")
+    @GetMapping("/list-access-role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
@@ -128,7 +128,7 @@ public class ApiKeyController {
         return ResponseEntity.ok(apiKeyService.findAllAccessRoles(id, context));
     }
 
-    @PatchMapping("/add_access_role")
+    @PatchMapping("/add-access-role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
@@ -136,14 +136,14 @@ public class ApiKeyController {
     )
     public ResponseEntity<Boolean> addAccessRole(
             final Context<?> context,
-            @RequestParam("api_key_id") final Long userId,
-            @RequestParam("access_role_id") final Long accessRoleId
+            @RequestParam("api-key-id") final Long apiKeyId,
+            @RequestParam("access-role-id") final Long accessRoleId
     ) throws ModuleException {
-        apiKeyService.addAccessRole(userId, accessRoleId, context);
+        apiKeyService.addAccessRole(apiKeyId, accessRoleId, context);
         return ResponseEntity.ok(true);
     }
 
-    @PatchMapping("/remove_access_role")
+    @PatchMapping("/remove-access-role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
@@ -151,10 +151,10 @@ public class ApiKeyController {
     )
     public ResponseEntity<Boolean> removeAccessRole(
             final Context<?> context,
-            @RequestParam("api_key_id") final Long userId,
-            @RequestParam("access_role_id") final Long accessRoleId
+            @RequestParam("api-key-id") final Long apiKeyId,
+            @RequestParam("access-role-id") final Long accessRoleId
     ) throws ModuleException {
-        apiKeyService.removeAccessRole(userId, accessRoleId, context);
+        apiKeyService.removeAccessRole(apiKeyId, accessRoleId, context);
         return ResponseEntity.ok(true);
     }
 

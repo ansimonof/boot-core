@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.myorg.module.auth.access.context.AuthenticatedContext;
+import org.myorg.module.core.exception.CoreExceptionBuilder;
 import org.myorg.modules.access.context.Context;
 import org.myorg.module.auth.access.context.UnauthenticatedContext;
 import org.myorg.module.auth.access.context.UserSessionAuthenticatedContext;
@@ -70,10 +71,10 @@ public class UserController {
         UserDto user = userService.findByUsername(logonForm.username, context);
         if (user == null) {
             throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, DbUser.FIELD_USERNAME, logonForm.username);
-        }
-
-        if (!Objects.equals(user.getPasswordHash(), logonForm.passwordHash)) {
+        } else if (!Objects.equals(user.getPasswordHash(), logonForm.passwordHash)) {
             throw ModuleExceptionBuilder.buildInvalidValueException(logonForm.passwordHash);
+        } else if (!user.isEnabled()) {
+            throw CoreExceptionBuilder.buildUserIsBannedException(logonForm.username);
         }
 
         SessionUser sessionUser = sessionRegistryService.auth(logonForm.username, user.getId());
@@ -84,7 +85,7 @@ public class UserController {
     @AccessPermission(
             context = UserSessionAuthenticatedContext.class
     )
-    public ResponseEntity<Boolean> logon(
+    public ResponseEntity<Boolean> logout(
             final Context<?> context
     ) {
         UserSessionAuthenticatedContext sessionAuthenticatedContext = (UserSessionAuthenticatedContext) context;
@@ -92,7 +93,7 @@ public class UserController {
         return ResponseEntity.ok(true);
     }
 
-    @GetMapping
+    @GetMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -100,12 +101,12 @@ public class UserController {
     )
     public ResponseEntity<UserDto> findById(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final Long id
     ) throws ModuleException {
         return ResponseEntity.ok(userService.findById(id, context));
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -113,13 +114,13 @@ public class UserController {
     )
     public ResponseEntity<Long> remove(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final Long id
     ) throws ModuleException {
         userService.remove(id, context);
         return ResponseEntity.ok(id);
     }
 
-    @PatchMapping
+    @PatchMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -127,12 +128,12 @@ public class UserController {
     )
     public ResponseEntity<UserDto> banUser(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final Long id
     ) throws ModuleException {
         return ResponseEntity.ok(userService.banUser(id, context));
     }
 
-    @GetMapping("/list_access_role")
+    @GetMapping("/list-access-role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -145,7 +146,7 @@ public class UserController {
         return ResponseEntity.ok(userService.findAllAccessRoles(id, context));
     }
 
-    @PatchMapping("/add_access_role")
+    @PatchMapping("/add-access-role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -153,14 +154,14 @@ public class UserController {
     )
     public ResponseEntity<Boolean> addAccessRole(
             final Context<?> context,
-            @RequestParam("user_id") final Long userId,
-            @RequestParam("access_role_id") final Long accessRoleId
+            @RequestParam("user-id") final Long userId,
+            @RequestParam("access-role-id") final Long accessRoleId
     ) throws ModuleException {
         userService.addAccessRole(userId, accessRoleId, context);
         return ResponseEntity.ok(true);
     }
 
-    @PatchMapping("/remove_access_role")
+    @PatchMapping("/remove-access-role")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -168,8 +169,8 @@ public class UserController {
     )
     public ResponseEntity<Boolean> removeAccessRole(
             final Context<?> context,
-            @RequestParam("user_id") final Long userId,
-            @RequestParam("access_role_id") final Long accessRoleId
+            @RequestParam("user-id") final Long userId,
+            @RequestParam("access-role-id") final Long accessRoleId
     ) throws ModuleException {
         userService.removeAccessRole(userId, accessRoleId, context);
         return ResponseEntity.ok(true);
