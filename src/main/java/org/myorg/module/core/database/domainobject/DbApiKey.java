@@ -10,13 +10,18 @@ import java.util.Set;
 
 @Entity
 @Table(
-        name = CoreModuleConsts.DB_PREFIX + "api_key"
+        name = CoreModuleConsts.DB_PREFIX + "api_key",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        columnNames = { DbApiKey.FIELD_NAME }
+                )
+        }
 )
 @NamedQueries(
         value = {
                 @NamedQuery(
                         name = DbApiKey.QUERY_FIND_BY_NAME,
-                        query = "select ak from DbApiKey ak where ak.name = :name"
+                        query = "select ak from DbApiKey ak where ak.name = :" + DbApiKey.FIELD_NAME
                 ),
                 @NamedQuery(
                         name = DbApiKey.QUERY_FIND_ALL,

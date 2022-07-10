@@ -9,7 +9,7 @@ public class UserManagementPrivilege extends AbstractPrivilege {
 
     private UserManagementPrivilege() {
         super(
-                "core.module.user_management",
+                "core.usermanagement",
                 AccessOp.READ, AccessOp.WRITE, AccessOp.DELETE
         );
     }

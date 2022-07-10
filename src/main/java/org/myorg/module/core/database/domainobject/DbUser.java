@@ -28,7 +28,7 @@ import java.util.Set;
                         query = "select u from DbUser u where u.username = :" + DbUser.FIELD_USERNAME
                 ),
                 @NamedQuery(
-                        name = DbUser.QUERY_FIND_ADMINS,
+                        name = DbUser.QUERY_FIND_ADMIN,
                         query = "select u from DbUser u where u.isAdmin = true"
                 )
         }
@@ -44,10 +44,11 @@ public class DbUser extends DomainObject {
     public static final String FIELD_PASSWORD_HASH = "password_hash";
     public static final String FIELD_IS_ENABLED = "is_enabled";
     public static final String FIELD_IS_ADMIN = "is_admin";
+    public static final String FIELD_TIME_ZONE = "time_zone";
 
     public static final String QUERY_FIND_ALL = "DbUser.findAll";
     public static final String QUERY_FIND_BY_USERNAME = "DbUser.findByUsername";
-    public static final String QUERY_FIND_ADMINS = "DbUser.findAdmins";
+    public static final String QUERY_FIND_ADMIN = "DbUser.findAdmin";
 
     @Column(name = FIELD_USERNAME, nullable = false, updatable = false)
     private String username;
@@ -60,6 +61,9 @@ public class DbUser extends DomainObject {
 
     @Column(name = FIELD_IS_ADMIN, nullable = false)
     private boolean isAdmin;
+
+    @Column(name = FIELD_TIME_ZONE, nullable = false)
+    private String timeZone;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

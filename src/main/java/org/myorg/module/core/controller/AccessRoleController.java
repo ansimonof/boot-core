@@ -19,10 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -45,10 +42,9 @@ public class AccessRoleController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<AccessRoleDto> findById(
-            final Context<?> context,
-            @PathVariable final Long id
+            @PathVariable final long id
     ) throws ModuleException {
-        AccessRoleDto accessRoleDto = accessRoleService.findById(id, context);
+        AccessRoleDto accessRoleDto = accessRoleService.findById(id);
         if (accessRoleDto == null) {
             throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbAccessRole.class, id);
         }
@@ -62,10 +58,8 @@ public class AccessRoleController {
             privilege = AccessRoleManagementPrivilege.class,
             ops = { AccessOp.READ }
     )
-    public ResponseEntity<Set<AccessRoleDto>> list(
-            final Context<?> context
-    ) throws ModuleException {
-        return ResponseEntity.ok(accessRoleService.findAll(context));
+    public ResponseEntity<Set<AccessRoleDto>> list() {
+        return ResponseEntity.ok(accessRoleService.findAll());
     }
 
     @PostMapping("/create")
@@ -76,7 +70,7 @@ public class AccessRoleController {
     )
     public ResponseEntity<AccessRoleDto> create(
             final Context<?> context,
-            @RequestParam final String name
+            @RequestParam("name") final String name
     ) throws ModuleException {
         AccessRoleDto accessRoleDto = accessRoleService.create(AccessRoleBuilder.builder().name(name), context);
         return ResponseEntity.ok(accessRoleDto);
@@ -90,10 +84,12 @@ public class AccessRoleController {
     )
     public ResponseEntity<AccessRoleDto> update(
             final Context<?> context,
-            @PathVariable final Long id,
-            @RequestParam(required = false) final String name
+            @PathVariable final long id,
+            @RequestParam("name") final Optional<String> oName
     ) throws ModuleException {
-        return ResponseEntity.ok(accessRoleService.update(id, AccessRoleBuilder.builder().name(name), context));
+        AccessRoleBuilder builder = AccessRoleBuilder.builder();
+        oName.ifPresent(builder::name);
+        return ResponseEntity.ok(accessRoleService.update(id, builder, context));
     }
 
     @DeleteMapping("/{id}")
@@ -103,10 +99,9 @@ public class AccessRoleController {
             ops = { AccessOp.DELETE }
     )
     public ResponseEntity<Long> remove(
-            final Context<?> context,
-            @PathVariable final Long id
-    ) throws ModuleException {
-        accessRoleService.remove(id, context);
+            @PathVariable final long id
+    ) {
+        accessRoleService.remove(id);
         return ResponseEntity.ok(id);
     }
 
@@ -136,7 +131,7 @@ public class AccessRoleController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<PrivilegeDto> findPrivilegeByKey(
-            @RequestParam final String key
+            @RequestParam("key") final String key
     ) throws ModuleException {
         AbstractPrivilege privilege = privilegeGetter.getAllPrivileges().stream()
                 .filter(p -> Objects.equals(p.getKey(), key))
@@ -161,8 +156,7 @@ public class AccessRoleController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<AccessRoleDto> setPrivileges(
-            final Context<?> context,
-            @RequestParam(name = "access-role-id") final Long accessRoleId,
+            @RequestParam(name = "id") final long accessRoleId,
             @RequestBody final PrivilegeSet newPrivileges
     ) throws ModuleException {
         AccessRoleDto accessRoleDto = accessRoleService.addPrivileges(
@@ -171,8 +165,7 @@ public class AccessRoleController {
                         .map(p -> PrivilegeBuilder.builder()
                                 .key(p.getKey())
                                 .ops(p.getOps())
-                        ).collect(Collectors.toSet()),
-                context);
+                        ).collect(Collectors.toSet()));
 
         return ResponseEntity.ok(accessRoleDto);
     }

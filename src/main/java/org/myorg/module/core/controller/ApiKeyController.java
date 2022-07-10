@@ -1,10 +1,10 @@
 package org.myorg.module.core.controller;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.myorg.module.auth.access.context.AuthenticatedContext;
 import org.myorg.module.core.CoreModuleConsts;
 import org.myorg.module.core.access.AccessPermission;
 import org.myorg.module.core.access.privilege.AccessOp;
+import org.myorg.module.core.database.domainobject.DbApiKey;
 import org.myorg.module.core.database.service.accessrole.AccessRoleDto;
 import org.myorg.module.core.database.service.apikey.ApiKeyBuilder;
 import org.myorg.module.core.database.service.apikey.ApiKeyDto;
@@ -12,6 +12,7 @@ import org.myorg.module.core.database.service.apikey.ApiKeyService;
 import org.myorg.module.core.privilege.ApiKeyRoleManagementPrivilege;
 import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.exception.ModuleException;
+import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,17 +30,15 @@ public class ApiKeyController {
         this.apiKeyService = apiKeyService;
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = ApiKeyRoleManagementPrivilege.class,
             ops = { AccessOp.READ }
     )
     public ResponseEntity<ApiKeyDto> findById(
-            final Context<?> context,
-            @PathVariable final Long id
-    ) throws ModuleException {
-        ApiKeyDto apiKeyDto = apiKeyService.findById(id ,context);
+            @PathVariable final long id) {
+        ApiKeyDto apiKeyDto = apiKeyService.findById(id);
         return ResponseEntity.ok(apiKeyDto);
     }
 
@@ -49,10 +48,8 @@ public class ApiKeyController {
             privilege = ApiKeyRoleManagementPrivilege.class,
             ops = { AccessOp.READ }
     )
-    public ResponseEntity<Set<ApiKeyDto>> list(
-            final Context<?> context
-    ) throws ModuleException {
-        return ResponseEntity.ok(apiKeyService.findAll(context));
+    public ResponseEntity<Set<ApiKeyDto>> list() {
+        return ResponseEntity.ok(apiKeyService.findAll());
     }
 
     @PostMapping("/create")
@@ -63,12 +60,11 @@ public class ApiKeyController {
     )
     public ResponseEntity<ApiKeyDto> create(
             final Context<?> context,
-            @RequestParam final ApiKeyForm creationForm
+            @RequestParam("name") final String name,
+            @RequestParam("value") final String value
     ) throws ModuleException {
         ApiKeyDto apiKeyDto = apiKeyService.create(
-                ApiKeyBuilder.builder()
-                        .name(creationForm.name)
-                        .value(creationForm.value),
+                ApiKeyBuilder.builder().name(name).value(value),
                 context);
         return ResponseEntity.ok(apiKeyDto);
     }
@@ -81,14 +77,13 @@ public class ApiKeyController {
     )
     public ResponseEntity<ApiKeyDto> update(
             final Context<?> context,
-            @PathVariable final Long id,
-            @RequestParam final ApiKeyForm apiKeyForm
+            @PathVariable final long id,
+            @RequestParam("name") final String name,
+            @RequestParam("value") final String value
     ) throws ModuleException {
         ApiKeyDto apiKeyDto = apiKeyService.update(
                 id,
-                ApiKeyBuilder.builder()
-                        .name(apiKeyForm.name)
-                        .value(apiKeyForm.value),
+                ApiKeyBuilder.builder().name(name).value(value),
                 context);
 
         return ResponseEntity.ok(apiKeyDto);
@@ -101,17 +96,13 @@ public class ApiKeyController {
             ops = { AccessOp.DELETE }
     )
     public ResponseEntity<Long> remove(
-            final Context<?> context,
-            @PathVariable final Long id,
-            @RequestParam final ApiKeyForm apiKeyForm
+            @PathVariable final long id
     ) throws ModuleException {
-        ApiKeyDto apiKeyDto = apiKeyService.update(
-                id,
-                ApiKeyBuilder.builder()
-                        .name(apiKeyForm.name)
-                        .value(apiKeyForm.value),
-                context);
+        if (apiKeyService.findById(id) == null) {
+            throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbApiKey.class, id);
+        }
 
+        apiKeyService.remove(id);
         return ResponseEntity.ok(id);
     }
 
@@ -122,10 +113,9 @@ public class ApiKeyController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<Set<AccessRoleDto>> listAccessRoles(
-            final Context<?> context,
-            @RequestParam final Long id
+            @RequestParam final long id
     ) throws ModuleException {
-        return ResponseEntity.ok(apiKeyService.findAllAccessRoles(id, context));
+        return ResponseEntity.ok(apiKeyService.findAllAccessRoles(id));
     }
 
     @PatchMapping("/add-access-role")
@@ -135,11 +125,10 @@ public class ApiKeyController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<Boolean> addAccessRole(
-            final Context<?> context,
-            @RequestParam("api-key-id") final Long apiKeyId,
-            @RequestParam("access-role-id") final Long accessRoleId
+            @RequestParam("api-key-id") final long apiKeyId,
+            @RequestParam("access-role-id") final long accessRoleId
     ) throws ModuleException {
-        apiKeyService.addAccessRole(apiKeyId, accessRoleId, context);
+        apiKeyService.addAccessRole(apiKeyId, accessRoleId);
         return ResponseEntity.ok(true);
     }
 
@@ -150,19 +139,11 @@ public class ApiKeyController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<Boolean> removeAccessRole(
-            final Context<?> context,
-            @RequestParam("api-key-id") final Long apiKeyId,
-            @RequestParam("access-role-id") final Long accessRoleId
+            @RequestParam("api-key-id") final long apiKeyId,
+            @RequestParam("access-role-id") final long accessRoleId
     ) throws ModuleException {
-        apiKeyService.removeAccessRole(apiKeyId, accessRoleId, context);
+        apiKeyService.removeAccessRole(apiKeyId, accessRoleId);
         return ResponseEntity.ok(true);
     }
 
-    private static class ApiKeyForm {
-
-        @JsonProperty("name")
-        public String name;
-        @JsonProperty("value")
-        public String value;
-    }
 }

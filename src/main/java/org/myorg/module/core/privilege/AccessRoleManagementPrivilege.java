@@ -9,7 +9,7 @@ public class AccessRoleManagementPrivilege extends AbstractPrivilege {
 
     private AccessRoleManagementPrivilege() {
         super(
-                "core.module.access_role_management",
+                "core.accessrolemanagement",
                 AccessOp.READ, AccessOp.WRITE, AccessOp.DELETE
         );
     }

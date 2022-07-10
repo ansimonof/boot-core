@@ -32,11 +32,9 @@ public class AccessRoleDto implements AbstractDto {
             return null;
         }
 
-        Set<PrivilegeEmbeddable> privileges;
+        Set<PrivilegeEmbeddable> privileges = new HashSet<>();
         if (dbAccessRole.getPrivileges() != null) {
             privileges = dbAccessRole.getPrivileges();
-        } else {
-            privileges = new HashSet<>();
         }
 
         return AccessRoleDto.builder()

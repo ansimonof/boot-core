@@ -1,5 +1,7 @@
 package org.myorg.module.core.database.service.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.*;
@@ -20,6 +22,7 @@ public class UserDto implements AbstractDto {
 
     private String username;
 
+    @JsonIgnore
     private String passwordHash;
 
     private boolean isEnabled;

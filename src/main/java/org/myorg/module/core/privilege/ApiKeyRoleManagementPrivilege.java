@@ -9,7 +9,7 @@ public class ApiKeyRoleManagementPrivilege extends AbstractPrivilege {
 
     private ApiKeyRoleManagementPrivilege() {
         super(
-                "core.module.api_key_management",
+                "core.apikeymanagement",
                 AccessOp.READ, AccessOp.WRITE, AccessOp.DELETE
         );
     }

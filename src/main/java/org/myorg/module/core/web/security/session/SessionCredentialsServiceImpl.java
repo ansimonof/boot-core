@@ -29,13 +29,14 @@ public class SessionCredentialsServiceImpl implements SessionCredentialsService 
 
     @Override
     public boolean isUserExists(Object id) throws ModuleException {
-        return userService.findById((Long) id, ContextUtils.createSystemContext()) != null;
+        return userService.findById((Long) id) != null;
     }
 
     @Override
     public UserSource createSource(Object id) throws ModuleException {
-        UserDto userDto = userService.findById((Long) id, ContextUtils.createSystemContext());
-        return new CoreUserSource((Long) id, getPrivileges(userDto));
+        long userId = (long) id;
+        UserDto userDto = userService.findById(userId);
+        return new CoreUserSource(userId, getPrivileges(userDto));
     }
 
     private Set<PrivilegePair> getPrivileges(UserDto userDto) throws ModuleException {

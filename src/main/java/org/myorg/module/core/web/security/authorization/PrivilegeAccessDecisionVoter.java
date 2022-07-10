@@ -50,13 +50,13 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
     @Override
     public int vote(Authentication authentication, Object object, Collection collection) {
         try {
-            return authorize(authentication, object, collection);
+            return authorize(authentication);
         } catch (ModuleException e) {
             throw new RuntimeException("Error during authorization", e);
         }
     }
 
-    private int authorize(Authentication authentication, Object object, Collection collection) throws ModuleException {
+    private int authorize(Authentication authentication) throws ModuleException {
         // Forbidding to execute query for unknown tokens
         if (!(authentication instanceof CustomAbstractAuthenticationToken)) {
             return ACCESS_DENIED;
@@ -81,10 +81,9 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
             return ACCESS_GRANTED;
         }
 
-        // Checking privileges
         if (context instanceof UserAuthenticatedContext) {
             CoreUserSource source = (CoreUserSource) context.getSource();
-            UserDto user = userService.findById(source.getId(), context);
+            UserDto user = userService.findById(source.getId());
             if (user == null) {
                 throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, source.getId());
             }
@@ -95,6 +94,7 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
             }
         }
 
+        // Checking privileges
         PrivilegePair controllerPrivilege = new PrivilegePair(
                 controllerInfo.getPrivilege().getKey(),
                 controllerInfo.getAccessOps()

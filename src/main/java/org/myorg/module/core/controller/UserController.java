@@ -1,11 +1,6 @@
 package org.myorg.module.core.controller;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.myorg.module.auth.access.context.AuthenticatedContext;
-import org.myorg.module.core.exception.CoreExceptionBuilder;
-import org.myorg.modules.access.context.Context;
 import org.myorg.module.auth.access.context.UnauthenticatedContext;
 import org.myorg.module.auth.access.context.UserSessionAuthenticatedContext;
 import org.myorg.module.auth.service.session.SessionRegistryService;
@@ -18,7 +13,9 @@ import org.myorg.module.core.database.service.accessrole.AccessRoleDto;
 import org.myorg.module.core.database.service.user.UserBuilder;
 import org.myorg.module.core.database.service.user.UserDto;
 import org.myorg.module.core.database.service.user.UserService;
+import org.myorg.module.core.exception.CoreExceptionBuilder;
 import org.myorg.module.core.privilege.UserManagementPrivilege;
+import org.myorg.modules.access.context.Context;
 import org.myorg.modules.modules.exception.ModuleException;
 import org.myorg.modules.modules.exception.ModuleExceptionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +33,8 @@ public class UserController {
     private final SessionRegistryService sessionRegistryService;
 
     @Autowired
-    public UserController(UserService userService, SessionRegistryService sessionRegistryService) {
+    public UserController(UserService userService,
+                          SessionRegistryService sessionRegistryService) {
         this.userService = userService;
         this.sessionRegistryService = sessionRegistryService;
     }
@@ -47,14 +45,15 @@ public class UserController {
     )
     public ResponseEntity<UserDto> registration(
             final Context<?> context,
-            @RequestBody final RegistrationForm registrationForm
+            @RequestParam("username") final String username,
+            @RequestParam("password-hash") final String passwordHash
     ) throws ModuleException {
         UserDto user = userService.create(
                 UserBuilder.builder()
-                        .username(registrationForm.username)
-                        .passwordHash(registrationForm.passwordHash)
+                        .username(username)
+                        .passwordHash(passwordHash)
                         .isEnabled(true)
-                        .isAdmin(false),
+                        .timeZone("UTC+3"),
                 context
         );
         return ResponseEntity.ok(user);
@@ -65,19 +64,19 @@ public class UserController {
             context = UnauthenticatedContext.class
     )
     public ResponseEntity<SessionUser> logon(
-            final Context<?> context,
-            @RequestBody final LogonForm logonForm
+            @RequestParam("username") final String username,
+            @RequestParam("password-hash") final String passwordHash
     ) throws ModuleException {
-        UserDto user = userService.findByUsername(logonForm.username, context);
+        UserDto user = userService.findByUsername(username);
         if (user == null) {
-            throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, DbUser.FIELD_USERNAME, logonForm.username);
-        } else if (!Objects.equals(user.getPasswordHash(), logonForm.passwordHash)) {
-            throw ModuleExceptionBuilder.buildInvalidValueException(logonForm.passwordHash);
+            throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, DbUser.FIELD_USERNAME, username);
+        } else if (!Objects.equals(user.getPasswordHash(), passwordHash)) {
+            throw CoreExceptionBuilder.buildBadPasswordForUser(username, passwordHash);
         } else if (!user.isEnabled()) {
-            throw CoreExceptionBuilder.buildUserIsBannedException(logonForm.username);
+            throw CoreExceptionBuilder.buildUserIsBannedException(username);
         }
 
-        SessionUser sessionUser = sessionRegistryService.auth(logonForm.username, user.getId());
+        SessionUser sessionUser = sessionRegistryService.auth(username, user.getId());
         return ResponseEntity.ok(sessionUser);
     }
 
@@ -100,10 +99,9 @@ public class UserController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<UserDto> findById(
-            final Context<?> context,
-            @PathVariable final Long id
-    ) throws ModuleException {
-        return ResponseEntity.ok(userService.findById(id, context));
+            @PathVariable final long id
+    ) {
+        return ResponseEntity.ok(userService.findById(id));
     }
 
     @DeleteMapping("/{id}")
@@ -113,14 +111,17 @@ public class UserController {
             ops = { AccessOp.DELETE }
     )
     public ResponseEntity<Long> remove(
-            final Context<?> context,
-            @PathVariable final Long id
+            @PathVariable final long id
     ) throws ModuleException {
-        userService.remove(id, context);
+        UserDto userDto = userService.findById(id);
+        if (userDto == null) {
+            throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, id);
+        }
+        userService.remove(id);
         return ResponseEntity.ok(id);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/enable-status/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -128,12 +129,13 @@ public class UserController {
     )
     public ResponseEntity<UserDto> banUser(
             final Context<?> context,
-            @PathVariable final Long id
+            @PathVariable final long id,
+            @RequestParam("enabled") final boolean enabled
     ) throws ModuleException {
-        return ResponseEntity.ok(userService.banUser(id, context));
+        return ResponseEntity.ok(userService.update(id, UserBuilder.builder().isEnabled(enabled), context));
     }
 
-    @GetMapping("/list-access-role")
+    @GetMapping("/list-access-role/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -141,12 +143,12 @@ public class UserController {
     )
     public ResponseEntity<Set<AccessRoleDto>> listAccessRoles(
             final Context<?> context,
-            @RequestParam final Long id
+            @PathVariable final long id
     ) throws ModuleException {
         return ResponseEntity.ok(userService.findAllAccessRoles(id, context));
     }
 
-    @PatchMapping("/add-access-role")
+    @PatchMapping("/add-access-role/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -154,14 +156,14 @@ public class UserController {
     )
     public ResponseEntity<Boolean> addAccessRole(
             final Context<?> context,
-            @RequestParam("user-id") final Long userId,
-            @RequestParam("access-role-id") final Long accessRoleId
+            @PathVariable final long id,
+            @RequestParam("access-role-id") final long accessRoleId
     ) throws ModuleException {
-        userService.addAccessRole(userId, accessRoleId, context);
+        userService.addAccessRole(id, accessRoleId, context);
         return ResponseEntity.ok(true);
     }
 
-    @PatchMapping("/remove-access-role")
+    @PatchMapping("/remove-access-role/{id}")
     @AccessPermission(
             context = AuthenticatedContext.class,
             privilege = UserManagementPrivilege.class,
@@ -169,31 +171,11 @@ public class UserController {
     )
     public ResponseEntity<Boolean> removeAccessRole(
             final Context<?> context,
-            @RequestParam("user-id") final Long userId,
-            @RequestParam("access-role-id") final Long accessRoleId
+            @PathVariable final long id,
+            @RequestParam("access-role-id") final long accessRoleId
     ) throws ModuleException {
-        userService.removeAccessRole(userId, accessRoleId, context);
+        userService.removeAccessRole(id, accessRoleId, context);
         return ResponseEntity.ok(true);
-    }
-
-    @Data
-    @NoArgsConstructor
-    private static class RegistrationForm {
-
-        @JsonProperty("username")
-        public String username;
-        @JsonProperty("password_hash")
-        public String passwordHash;
-    }
-
-    @Data
-    @NoArgsConstructor
-    private static class LogonForm {
-
-        @JsonProperty("username")
-        public String username;
-        @JsonProperty("password_hash")
-        public String passwordHash;
     }
 
 }

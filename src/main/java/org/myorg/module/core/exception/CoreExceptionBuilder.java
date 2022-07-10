@@ -15,4 +15,11 @@ public class CoreExceptionBuilder {
             put("username", username);
         }});
     }
+
+    public static ModuleException buildBadPasswordForUser(String username, String passwordHash) {
+        return new ModuleException("bad_password_for_user", new HashMap<String, Object>() {{
+            put("username", username);
+            put("password_hash", passwordHash);
+        }});
+    }
 }

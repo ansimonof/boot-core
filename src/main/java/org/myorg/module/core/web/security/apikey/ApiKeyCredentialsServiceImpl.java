@@ -29,17 +29,17 @@ public class ApiKeyCredentialsServiceImpl implements ApiKeyCredentialsService {
 
     @Override
     public boolean isApiKeyExists(String apiKey) throws ModuleException {
-        return apiKeyService.findByValue(apiKey, ContextUtils.createSystemContext()) != null;
+        return apiKeyService.findByValue(apiKey) != null;
     }
 
     @Override
     public ApiKeySource createSource(String apiKey) throws ModuleException {
-        ApiKeyDto apiKeyDto = apiKeyService.findByValue(apiKey, ContextUtils.createSystemContext());
+        ApiKeyDto apiKeyDto = apiKeyService.findByValue(apiKey);
         return new CoreApiKeySource(apiKeyDto.getId(), getPrivileges(apiKeyDto));
     }
 
     private Set<PrivilegePair> getPrivileges(ApiKeyDto apiKeyDto) throws ModuleException {
-        Set<AccessRoleDto> accessRoleDtos = apiKeyService.findAllAccessRoles(apiKeyDto.getId(), ContextUtils.createSystemContext());
+        Set<AccessRoleDto> accessRoleDtos = apiKeyService.findAllAccessRoles(apiKeyDto.getId());
         return privilegeGetter.mergeAccessRoles(accessRoleDtos);
     }
 }
