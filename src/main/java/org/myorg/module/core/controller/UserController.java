@@ -52,6 +52,7 @@ public class UserController {
                 UserBuilder.builder()
                         .username(username)
                         .passwordHash(passwordHash)
+                        .isAdmin(false)
                         .isEnabled(true)
                         .timeZone("UTC+3"),
                 context
@@ -142,10 +143,9 @@ public class UserController {
             ops = { AccessOp.READ }
     )
     public ResponseEntity<Set<AccessRoleDto>> listAccessRoles(
-            final Context<?> context,
             @PathVariable final long id
     ) throws ModuleException {
-        return ResponseEntity.ok(userService.findAllAccessRoles(id, context));
+        return ResponseEntity.ok(userService.findAllAccessRoles(id));
     }
 
     @PatchMapping("/add-access-role/{id}")
@@ -155,11 +155,10 @@ public class UserController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<Boolean> addAccessRole(
-            final Context<?> context,
             @PathVariable final long id,
             @RequestParam("access-role-id") final long accessRoleId
     ) throws ModuleException {
-        userService.addAccessRole(id, accessRoleId, context);
+        userService.addAccessRole(id, accessRoleId);
         return ResponseEntity.ok(true);
     }
 
@@ -170,11 +169,10 @@ public class UserController {
             ops = { AccessOp.WRITE }
     )
     public ResponseEntity<Boolean> removeAccessRole(
-            final Context<?> context,
             @PathVariable final long id,
             @RequestParam("access-role-id") final long accessRoleId
     ) throws ModuleException {
-        userService.removeAccessRole(id, accessRoleId, context);
+        userService.removeAccessRole(id, accessRoleId);
         return ResponseEntity.ok(true);
     }
 

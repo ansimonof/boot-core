@@ -87,10 +87,10 @@ public class PrivilegeAccessDecisionVoter implements CustomAccessDecisionVoter {
             if (user == null) {
                 throw ModuleExceptionBuilder.buildNotFoundDomainObjectException(DbUser.class, source.getId());
             }
-            if (user.isAdmin()) {
-                return ACCESS_GRANTED;
-            } else if (!user.isEnabled()) {
+            if (!user.isEnabled()) {
                 return ACCESS_DENIED;
+            } else if (user.isAdmin()) {
+                return ACCESS_GRANTED;
             }
         }
 

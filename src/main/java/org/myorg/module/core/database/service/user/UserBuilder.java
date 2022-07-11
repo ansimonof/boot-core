@@ -7,6 +7,7 @@ public class UserBuilder extends DomainObjectBuilder {
     private BuilderField<String> username = new BuilderField<>();
     private BuilderField<String> passwordHash = new BuilderField<>();
     private BuilderField<Boolean> isEnabled = new BuilderField<>();
+    private BuilderField<Boolean> isAdmin = new BuilderField<>();
     private BuilderField<String> timeZone = new BuilderField<>();
 
     public static UserBuilder builder() {
@@ -25,6 +26,11 @@ public class UserBuilder extends DomainObjectBuilder {
 
     public UserBuilder isEnabled(Boolean isEnabled) {
         this.isEnabled.setValue(isEnabled);
+        return this;
+    }
+
+    public UserBuilder isAdmin(Boolean isAdmin) {
+        this.isAdmin.setValue(isAdmin);
         return this;
     }
 
@@ -47,6 +53,10 @@ public class UserBuilder extends DomainObjectBuilder {
         return isEnabled.getValue();
     }
 
+    public Boolean getIsAdmin() {
+        return isAdmin.getValue();
+    }
+
     public String getTimeZone() {
         return timeZone.getValue();
     }
@@ -63,6 +73,10 @@ public class UserBuilder extends DomainObjectBuilder {
 
     public boolean isContainEnabled() {
         return isEnabled.isContain();
+    }
+
+    public boolean isContainAdmin() {
+        return isAdmin.isContain();
     }
 
     public boolean isContainTimeZone() {

@@ -51,7 +51,7 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
         }
 
         DbUser dbUser = new DbUser();
-        setFields(dbUser, builder, context);
+        setFields(dbUser, builder);
 
         return UserDto.from(dao.makePersistent(dbUser));
     }
@@ -76,26 +76,18 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
             throw ModuleExceptionBuilder.buildEmptyValueException(DbUser.class, DbUser.FIELD_TIME_ZONE);
         }
 
-        setFields(dbUser, builder, context);
+        setFields(dbUser, builder);
 
         return dtoBuilder.apply(dao.makePersistent(dbUser));
     }
 
     @Transactional(readOnly = true)
-    public UserDto findByUsername(String username) throws ModuleException {
+    public UserDto findByUsername(String username) {
         return dtoBuilder.apply(dao.findByUsername(username));
     }
 
     @Transactional(readOnly = true)
-    public UserDto findAdmin() throws ModuleException {
-        return dao.execNamedQuery(DbUser.QUERY_FIND_ADMIN, Collections.emptyMap())
-                .map(UserDto::from)
-                .findFirst()
-                .orElse(null);
-    }
-
-    @Transactional(readOnly = true)
-    public Set<AccessRoleDto> findAllAccessRoles(long userId, Context<?> context) throws ModuleException {
+    public Set<AccessRoleDto> findAllAccessRoles(long userId) throws ModuleException {
         DbUser dbUser = dao.checkExistenceAndGet(userId);
         return dbUser.getAccessRoles().stream()
                 .map(AccessRoleDto::from)
@@ -103,7 +95,7 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
     }
 
     @Transactional
-    public UserDto addAccessRole(long userId, long accessRoleId, Context<?> context) throws ModuleException {
+    public UserDto addAccessRole(long userId, long accessRoleId) throws ModuleException {
         DbUser dbUser = dao.checkExistenceAndGet(userId);
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndGet(accessRoleId);
         dbUser.addAccessRole(dbAccessRole);
@@ -112,7 +104,7 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
     }
 
     @Transactional
-    public UserDto removeAccessRole(long userId, long accessRoleId, Context<?> context) throws ModuleException {
+    public UserDto removeAccessRole(long userId, long accessRoleId) throws ModuleException {
         DbUser dbUser = dao.checkExistenceAndGet(userId);
         DbAccessRole dbAccessRole = accessRoleDAO.checkExistenceAndGet(accessRoleId);
         dbUser.getAccessRoles().remove(dbAccessRole);
@@ -121,13 +113,13 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
     }
 
     private void setFields(DbUser dbUser,
-                           UserBuilder builder,
-                           Context<?> context) throws ModuleException {
+                           UserBuilder builder) throws ModuleException {
         if (builder.isContainUsername()) {
             dao.checkUniqueness(
                     dbUser,
                     () -> dao.findByUsername(builder.getUsername()),
-                    () -> ModuleExceptionBuilder.buildNotUniqueDomainObjectException(DbUser.class, DbUser.FIELD_USERNAME, builder.getUsername()));
+                    () -> ModuleExceptionBuilder.buildNotUniqueDomainObjectException(
+                            DbUser.class, DbUser.FIELD_USERNAME, builder.getUsername()));
             dbUser.setUsername(builder.getUsername());
         }
 
@@ -142,6 +134,10 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
             dbUser.setEnabled(builder.getIsEnabled());
         }
 
+        if (builder.isContainAdmin()) {
+            dbUser.setAdmin(builder.getIsAdmin());
+        }
+
         if (builder.isContainTimeZone()) {
             try {
                 ZoneId.of(builder.getTimeZone());
@@ -149,12 +145,6 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
                 throw ModuleExceptionBuilder.buildInternalServerErrorException(e);
             }
             dbUser.setTimeZone(builder.getTimeZone());
-        }
-
-        if (findAdmin() == null) {
-            dbUser.setAdmin(true);
-        } else {
-            dbUser.setAdmin(false);
         }
 
     }

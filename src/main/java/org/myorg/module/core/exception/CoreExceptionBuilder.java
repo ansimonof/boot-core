@@ -6,6 +6,10 @@ import java.util.HashMap;
 
 public class CoreExceptionBuilder {
 
+    public static ModuleException buildServerIsAlreadyInitialized() {
+        return new ModuleException("server_is_already_initialized");
+    }
+
     public static ModuleException buildAdminCannotBeBannedException() {
         return new ModuleException("admin_cannot_be_banned");
     }

@@ -29,7 +29,7 @@ public class SessionCredentialsServiceImpl implements SessionCredentialsService 
 
     @Override
     public boolean isUserExists(Object id) throws ModuleException {
-        return userService.findById((Long) id) != null;
+        return userService.findById((long) id) != null;
     }
 
     @Override
@@ -40,7 +40,7 @@ public class SessionCredentialsServiceImpl implements SessionCredentialsService 
     }
 
     private Set<PrivilegePair> getPrivileges(UserDto userDto) throws ModuleException {
-        Set<AccessRoleDto> accessRoleDtos = userService.findAllAccessRoles(userDto.getId(), ContextUtils.createSystemContext());
+        Set<AccessRoleDto> accessRoleDtos = userService.findAllAccessRoles(userDto.getId());
         return privilegeGetter.mergeAccessRoles(accessRoleDtos);
     }
 
