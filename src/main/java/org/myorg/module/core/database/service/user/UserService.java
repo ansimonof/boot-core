@@ -81,6 +81,18 @@ public class UserService extends DomainObjectService<DbUser, UserDAO, UserBuilde
         return dtoBuilder.apply(dao.makePersistent(dbUser));
     }
 
+    @Override
+    @Transactional
+    public void remove(long id) throws ModuleException {
+        UserDto userDto = findById(id);
+        if (userDto != null) {
+            if (userDto.isAdmin()) {
+                throw CoreExceptionBuilder.buildAdminCannotRemovedException();
+            }
+            super.remove(id);
+        }
+    }
+
     @Transactional(readOnly = true)
     public UserDto findByUsername(String username) {
         return dtoBuilder.apply(dao.findByUsername(username));

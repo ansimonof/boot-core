@@ -14,6 +14,10 @@ public class CoreExceptionBuilder {
         return new ModuleException("admin_cannot_be_banned");
     }
 
+    public static ModuleException buildAdminCannotRemovedException() {
+        return new ModuleException("admin_cannot_be_removed");
+    }
+
     public static ModuleException buildUserIsBannedException(String username) {
         return new ModuleException("user_is_banned", new HashMap<String, Object>() {{
             put("username", username);

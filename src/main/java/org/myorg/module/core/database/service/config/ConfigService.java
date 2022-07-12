@@ -19,16 +19,14 @@ public abstract class ConfigService<T extends DbAbstractConfig, U extends Config
         this.dao = dao;
     }
 
-    @Transactional(readOnly = true)
-    public <R> Optional<R> get(Config<R> config) {
+    protected <R> Optional<R> get(Config<R> config) {
         String key = config.getKey();
         TypeConverter<R> converter = config.getConverter();
         Optional<byte[]> value = dao.getValue(key);
         return value.isPresent() ? Optional.ofNullable(converter.unpack(value.get())) : Optional.empty();
     }
 
-    @Transactional
-    public <R> void set(Config<R> config, R newValue) {
+    protected <R> void set(Config<R> config, R newValue) {
         String key = config.getKey();
         TypeConverter<R> converter = config.getConverter();
 
